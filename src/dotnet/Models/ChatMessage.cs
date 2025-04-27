@@ -1,19 +1,18 @@
-namespace Emotika.Api.Models;
+using System.Text.Json.Serialization;
 
-public enum MessageStatus
-{
-    Pending,
-    Processing,
-    Completed,
-    Failed
-}
+namespace Emotika.Api.Models;
 
 public class ChatMessage
 {
-    public string Id { get; set; } = Guid.NewGuid().ToString();
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("userMessage")]
     public string UserMessage { get; set; } = string.Empty;
-    public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+
+    [JsonPropertyName("timestamp")]
+    public DateTime Timestamp { get; set; }
+
+    [JsonPropertyName("response")]
     public string? Response { get; set; }
-    public MessageStatus Status { get; set; } = MessageStatus.Pending;
-    public string? ErrorMessage { get; set; }
 } 

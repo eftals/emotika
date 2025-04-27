@@ -9,7 +9,7 @@ from huggingface_hub import login, HfApi, snapshot_download
 os.environ["LLAMA_CPP_LOG_LEVEL"] = "INFO"
 
 # Hugging Face authentication
-
+hf_token = os.getenv("HF_TOKEN")
 if hf_token:
     login(hf_token)
 else:

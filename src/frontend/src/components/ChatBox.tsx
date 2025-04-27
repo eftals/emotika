@@ -1,113 +1,98 @@
 import React, { useState, useEffect } from 'react';
 import './ChatBox.css';
 
+// Function to generate a GUID
+function generateGuid(): string {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
 interface ChatMessage {
     id: string;
     userMessage: string;
     timestamp: string;
-    response: string | null;
-    status: 'Pending' | 'Processing' | 'Completed' | 'Failed';
-    errorMessage?: string;
+    response?: string;
 }
 
 const ChatBox: React.FC = () => {
     const [message, setMessage] = useState('');
     const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-
-    const pollMessageStatus = async (messageId: string) => {
-        try {
-            const response = await fetch(`http://localhost:5000/chat/${messageId}`);
-            if (!response.ok) return;
-            
-            const data: ChatMessage = await response.json();
-            setChatHistory(prev => 
-                prev.map(msg => msg.id === messageId ? data : msg)
-            );
-
-            // Continue polling if message is still processing
-            if (data.status === 'Processing' || data.status === 'Pending') {
-                setTimeout(() => pollMessageStatus(messageId), 1000);
-            }
-        } catch (error) {
-            console.error('Error polling message status:', error);
-        }
-    };
+    const [error, setError] = useState<string | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!message.trim()) return;
+        if (!message.trim() || isLoading) return;
 
+        const newMessage: ChatMessage = {
+            id: generateGuid(),
+            userMessage: message,
+            timestamp: new Date().toISOString(),
+        };
+
+        setChatHistory((prev) => [...prev, newMessage]);
+        setMessage('');
         setIsLoading(true);
+        setError(null);
+
         try {
-            const response = await fetch('http://localhost:5000/chat', {
+            const response = await fetch(`${process.env.REACT_APP_API_URL}/chat`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(message),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: newMessage.id,
+                    userMessage: newMessage.userMessage,
+                    timestamp: newMessage.timestamp
+                }),
             });
 
             if (!response.ok) {
-                throw new Error('Network response was not ok');
+                if (response.status === 408) {
+                    throw new Error('Request timed out. Please try again.');
+                }
+                throw new Error('Failed to send message');
             }
 
-            const data: ChatMessage = await response.json();
-            setChatHistory(prev => [...prev, data]);
-            setMessage('');
-            
-            // Start polling for status updates
-            pollMessageStatus(data.id);
+            const data = await response.json();
+            setChatHistory((prev) =>
+                prev.map((msg) =>
+                    msg.id === newMessage.id
+                        ? { ...msg, response: data.response }
+                        : msg
+                )
+            );
         } catch (error) {
-            console.error('Error sending message:', error);
+            setError(error instanceof Error ? error.message : 'An error occurred');
+            // Remove the message from chat history if it failed
+            setChatHistory((prev) => prev.filter(msg => msg.id !== newMessage.id));
         } finally {
             setIsLoading(false);
-        }
-    };
-
-    const getStatusIndicator = (status: ChatMessage['status']) => {
-        switch (status) {
-            case 'Pending':
-                return '⏳';
-            case 'Processing':
-                return '🔄';
-            case 'Completed':
-                return '✅';
-            case 'Failed':
-                return '❌';
-            default:
-                return '';
         }
     };
 
     return (
         <div className="chat-container">
             <div className="chat-history">
-                {chatHistory.map((chat) => (
-                    <div key={chat.id} className="chat-message">
-                        <div className="message-header">
-                            <span className="status-indicator">
-                                {getStatusIndicator(chat.status)}
-                            </span>
-                            <span className="timestamp">
-                                {new Date(chat.timestamp).toLocaleTimeString()}
-                            </span>
-                        </div>
+                {chatHistory.map((msg) => (
+                    <div key={msg.id} className="chat-message">
                         <div className="user-message">
-                            <strong>You:</strong> {chat.userMessage}
+                            <strong>You:</strong> {msg.userMessage}
                         </div>
-                        {chat.status === 'Failed' && (
-                            <div className="error-message">
-                                Error: {chat.errorMessage}
-                            </div>
-                        )}
-                        {chat.response && (
+                        {msg.response && (
                             <div className="bot-message">
-                                <strong>Bot:</strong> {chat.response}
+                                <strong>Emotika:</strong> {msg.response}
                             </div>
                         )}
                     </div>
                 ))}
+                {error && (
+                    <div className="error-message">
+                        {error}
+                    </div>
+                )}
             </div>
             <form onSubmit={handleSubmit} className="chat-input-form">
                 <input
@@ -118,8 +103,12 @@ const ChatBox: React.FC = () => {
                     disabled={isLoading}
                     className="chat-input"
                 />
-                <button type="submit" disabled={isLoading} className="chat-submit">
-                    {isLoading ? 'Sending...' : 'Send'}
+                <button 
+                    type="submit" 
+                    disabled={isLoading || !message.trim()} 
+                    className="chat-submit"
+                >
+                    {isLoading ? 'Waiting for response...' : 'Send'}
                 </button>
             </form>
         </div>

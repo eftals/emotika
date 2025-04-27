@@ -14,30 +14,7 @@ services:
       - NODE_ENV=development
       - REACT_APP_API_URL=http://localhost:5000
     depends_on:
-      - python-backend
       - dotnet-backend
-
-  python-backend:
-    build:
-      context: ./src/python
-      dockerfile: Dockerfile.dev
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./src/python:/app
-    environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - HF_TOKEN=${HF_TOKEN}
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    depends_on:
-      - redis
 
   dotnet-backend:
     build:
