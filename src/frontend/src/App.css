@@ -1,0 +1,59 @@
+.App {
+  text-align: center;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff;
+}
+
+.App-header {
+  background-color: #282c34;
+  padding: 20px;
+  color: white;
+  margin-bottom: 20px;
+}
+
+.App-header h1 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+main {
+  flex: 1;
+  padding: 0 20px;
+}
+
+.health-status {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.service-status {
+  background-color: #1a1d23;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.service-status h3 {
+  color: #61dafb;
+  margin-top: 0;
+}
+
+.healthy {
+  color: #4caf50;
+}
+
+.unhealthy {
+  color: #f44336;
+}
+
+.error {
+  color: #f44336;
+  background-color: rgba(244, 67, 54, 0.1);
+  padding: 10px;
+  border-radius: 4px;
+  margin: 10px 0;
+} 
