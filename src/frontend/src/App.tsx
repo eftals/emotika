@@ -1,8 +1,12 @@
 import React from 'react';
 import './App.css';
 import ChatBox from './components/ChatBox';
+import { useSession } from './hooks/useSession';
 
 function App() {
+  // Initialize session management
+  useSession();
+
   return (
     <div className="App">
       <header className="App-header">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './ChatBox.css';
 
 // Function to generate a GUID
@@ -22,6 +22,19 @@ const ChatBox: React.FC = () => {
     const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const chatHistoryRef = useRef<HTMLDivElement>(null);
+
+    // Function to scroll to the bottom of the chat history
+    const scrollToBottom = () => {
+        if (chatHistoryRef.current) {
+            chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight;
+        }
+    };
+
+    // Scroll to bottom when chat history changes
+    useEffect(() => {
+        scrollToBottom();
+    }, [chatHistory]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -39,6 +52,10 @@ const ChatBox: React.FC = () => {
         setError(null);
 
         try {
+            // Create an AbortController with a 180 second timeout
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 180000); // 180 seconds timeout
+            
             const response = await fetch(`${process.env.REACT_APP_API_URL}/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -47,7 +64,11 @@ const ChatBox: React.FC = () => {
                     userMessage: newMessage.userMessage,
                     timestamp: newMessage.timestamp
                 }),
+                signal: controller.signal
             });
+            
+            // Clear the timeout since the request completed
+            clearTimeout(timeoutId);
 
             if (!response.ok) {
                 if (response.status === 408) {
@@ -65,7 +86,11 @@ const ChatBox: React.FC = () => {
                 )
             );
         } catch (error) {
-            setError(error instanceof Error ? error.message : 'An error occurred');
+            if (error instanceof Error && error.name === 'AbortError') {
+                setError('Request timed out after 180 seconds. Please try again.');
+            } else {
+                setError(error instanceof Error ? error.message : 'An error occurred');
+            }
             // Remove the message from chat history if it failed
             setChatHistory((prev) => prev.filter(msg => msg.id !== newMessage.id));
         } finally {
@@ -75,7 +100,7 @@ const ChatBox: React.FC = () => {
 
     return (
         <div className="chat-container">
-            <div className="chat-history">
+            <div className="chat-history" ref={chatHistoryRef}>
                 {chatHistory.map((msg) => (
                     <div key={msg.id} className="chat-message">
                         <div className="user-message">

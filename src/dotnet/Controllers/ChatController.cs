@@ -12,8 +12,8 @@ public class ChatController : ControllerBase
 {
     private readonly IConnectionMultiplexer _redis;
     private const string CHAT_KEY_PREFIX = "chat:";
-    private const string INPUT_QUEUE = "llama_queue";
-    private const string RESPONSE_QUEUE = "llama_response_queue";
+    private const string INPUT_QUEUE = "emotika_incoming";
+    private const string RESPONSE_QUEUE = "emotika_response";
     private const int RESPONSE_TIMEOUT_SECONDS = 60;
 
     public ChatController(IConnectionMultiplexer redis)

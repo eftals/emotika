@@ -1,5 +1,7 @@
 using StackExchange.Redis;
 using Microsoft.OpenApi.Models;
+using Emotika.Api.Services;
+using Emotika.Api.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +34,9 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
     return ConnectionMultiplexer.Connect(config);
 });
 
+// Register Session Service
+builder.Services.AddScoped<ISessionService, SessionService>();
+
 // Configure CORS
 builder.Services.AddCors(options =>
 {
@@ -39,7 +44,8 @@ builder.Services.AddCors(options =>
     {
         policy.AllowAnyOrigin()
               .AllowAnyMethod()
-              .AllowAnyHeader();
+              .AllowAnyHeader()
+              .WithExposedHeaders("X-Session-Token"); // Allow the session token header
     });
 });
 
@@ -59,6 +65,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseCors();
+app.UseMiddleware<SessionMiddleware>(); // Add session middleware
 app.UseAuthorization();
 app.MapControllers();
 
