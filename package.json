@@ -1,0 +1,24 @@
+{
+  "name": "emotika",
+  "version": "1.0.0",
+  "description": "Multi-tiered application with Python, React, Redis, and ASP.NET REST services",
+  "scripts": {
+    "setup": "npm install && npm run build",
+    "build": "npm run build:frontend && npm run build:dotnet",
+    "build:frontend": "cd src/frontend && npm install && npm run build",
+    "build:dotnet": "cd src/dotnet && dotnet build",
+    "start": "docker-compose up --build",
+    "stop": "docker-compose down",
+    "teardown": "docker-compose down -v && rm -rf src/frontend/node_modules src/dotnet/bin src/dotnet/obj"
+  },
+  "keywords": [
+    "multi-tiered",
+    "python",
+    "react",
+    "redis",
+    "asp.net",
+    "docker"
+  ],
+  "author": "",
+  "license": "MIT"
+} 
